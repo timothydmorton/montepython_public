@@ -595,7 +595,7 @@ def create_parser():
     # -- sampling method (OPTIONAL)
     runparser.add_argument('-m', '--method', help=helpdict['m'],
                            dest='method', default='MH',
-                           choices=['MH', 'NS', 'CH', 'IS', 'Der'])
+                           choices=['MH', 'NS', 'CH', 'IS', 'Der', 'emcee'])
     # -- update Metropolis Hastings (OPTIONAL)
     runparser.add_argument('--update', help=helpdict['update'], type=int,
                            default=0)

@@ -3,7 +3,9 @@ import emcee
 
 import sampler
 
-default_nwalkers = 200
+import pdb
+
+default_nwalkers = 20
 
 def lnprob(theta, cosmo, data):
     """ln posterior to be used by emcee
@@ -15,10 +17,12 @@ def lnprob(theta, cosmo, data):
     parameter_names = data.get_mcmc_parameters(['varying'])
 
     # Update arguments according to parameter vector
-    for k,v in zip(parameter_names, theta):
-        data.cosmo_arguments[k] = v
+    pars = {k:v for k,v in zip(parameter_names, theta)}
+    data.cosmo_arguments.update(pars)
+    cosmo.set(pars)
 
     logl = 0
+    pdb.set_trace()
     for likelihood in data.lkl.itervalues():
         logl += likelihood.loglkl(cosmo, data)
 
@@ -31,12 +35,18 @@ def run(cosmo, data, command_line):
     parameter_names = data.get_mcmc_parameters(['varying'])
     ndim = len(parameter_names)
 
+    # pdb.set_trace()
     # Initialize walkers
-    fiducial_values = [data.mcmc_parameters[p]['initial'][0] for p in parameter_names]
-    p0 = [(1 + np.random.randn(ndim)*0.05)*fiducial_values for i in range(nwalkers)]
+    fiducial_values = [data.mcmc_parameters[p]['initial'][0]*\
+                        data.mcmc_parameters[p]['scale'] for p in parameter_names]
+    p0 = [(1 + np.random.randn(ndim)*0.01)*fiducial_values for i in range(nwalkers)]
 
     s = emcee.EnsembleSampler(nwalkers, ndim, lnprob, args=[cosmo, data])
-    s.run_mcmc(p0, command_line.N)
+
+    nsteps = command_line.N
+    for i, result in enumerate(s.sample(p0, iterations=nsteps)):
+        if (i+1) % 1 == 0:
+            print("{0:5.1%}".format(float(i) / nsteps))
 
     print('Acceptance fraction: {0}'.format(s.acceptance_fraction))
     

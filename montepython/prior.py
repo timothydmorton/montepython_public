@@ -4,6 +4,7 @@
 
 .. moduleauthor:: Benjamin Audren <benjamin.audren@epfl.ch>
 """
+import numpy as np
 import random as rd
 from copy import deepcopy
 import io_mp
@@ -51,6 +52,7 @@ class Prior(object):
                         "mean nor sigma. Please add them in the parameter " +
                         "file.")
 
+
         # Store boundaries for convenient access later
         # Put all fields that are -1 to None to avoid confusion later on.
         self.prior_range = [a if not((a is -1) or (a is None)) else None
@@ -79,6 +81,10 @@ class Prior(object):
                 within_bounds = calue_within_prior_range(value)
 
             return value
+
+        elif self.prior_type == 'logflat':
+            lo, hi = np.log(self.prior_range)
+            return np.exp(rd.uniform(lo, hi))
                 
     def value_within_prior_range(self, value):
         """
@@ -112,5 +118,9 @@ class Prior(object):
         which should have been previously checked with :func:`is_bound`
 
         """
-        return (self.prior_range[0] + 
-                value * (self.prior_range[1] - self.prior_range[0]))
+        if self.prior_type == 'flat':
+            return (self.prior_range[0] + 
+                    value * (self.prior_range[1] - self.prior_range[0]))
+        elif self.prior_type == 'logflat':
+            lo, hi = np.log(self.prior_range)
+            return np.exp(lo + value * (hi - lo))
